@@ -1,0 +1,94 @@
+body {
+  background-image: url("../img/background_boat.jpg");
+  background: contain no-repeat;
+
+
+  height: 100vh;
+  width: 100vw;
+  padding: 0;
+  margin: 0;
+
+  display: flex;
+  flex-flow: column;
+  align-items: center;
+  justify-content: center;
+  
+}
+#main_div {
+  
+
+  width: 300px;
+  height: 250px;
+  padding: 30px;
+
+  background: rgba(255, 255, 255, 0.8);
+  border-radius: 3px;
+  box-shadow: 0px 0px 4px #000;
+  text-align: center;
+}
+#main_div h1 {
+  margin: 10px 0px 5px 0px;
+  font-size: 32px;
+}
+#difficulty {
+    margin-top: 20px;
+  padding: 5px;
+}
+#difficulty span {
+  display: inline-block;
+  vertical-align: top;
+  box-sizing: border-box;
+  width: 80px;
+  height: 32px;
+  line-height: 29px;
+  margin: 5px;
+  border: 3px solid #aaa;
+  background: rgba(255, 255, 255, 0.9);
+  font-size: 16px;
+  cursor: pointer;
+}
+#difficulty span:nth-child(1) {
+  color: #0a3;
+}
+#difficulty span:nth-child(2) {
+  color: #c90;
+}
+#difficulty span:nth-child(3) {
+  color: #c50;
+}
+#difficulty .selected {
+  border-color: #333;
+}
+#turn {
+margin-top: 10px;
+}
+#turn span {
+  display: inline-block;
+  vertical-align: top;
+  box-sizing: border-box;
+  width: 42%;
+  height: 32px;
+  line-height: 29px;
+  margin: 5px;
+  border: 3px solid #aaa;
+  background: rgba(255, 255, 255, 0.9);
+  font-size: 16px;
+  cursor: pointer;
+}
+#turn .selected {
+  border-color: #333;
+}
+#main_div a {
+  display: inline-block;
+  align-self: center;
+  box-sizing: border-box;
+  width: 90%;
+  height: 32px;
+  line-height: 29px;
+  margin-top: 40px;
+  border: 3px solid #555;
+  background: rgba(255, 255, 255, 0.9);
+  font-size: 16px;
+  color: #000;
+  text-decoration: none;
+}

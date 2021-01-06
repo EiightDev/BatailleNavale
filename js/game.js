@@ -12,6 +12,9 @@
         PHASE_GAME_OVER: "PHASE_GAME_OVER",
         PHASE_WAITING: "waiting",
 
+        // horizontal: 0 || vertical: 1
+        placement: 0,
+
         currentPhase: "",
         phaseOrder: [],
         // garde une référence vers l'indice du tableau phaseOrder qui correspond à la phase de jeu pour le joueur humain
@@ -32,7 +35,7 @@
 
             // initialisation
             this.grid = document.querySelector('.board .main-grid');
-            this.miniGrid = document.querySelector('.board .mini-grid');
+            this.miniGrid = document.querySelector('.mini-grid');
 
             // défini l'ordre des phase de jeu
             this.phaseOrder = [
@@ -42,7 +45,11 @@
                 this.PHASE_PLAY_OPPONENT,
                 this.PHASE_GAME_OVER
             ];
-            this.playerTurnPhaseIndex = 0;
+            this.playerTurnPhaseIndex = 2;
+
+            // initialise les sons
+            utils.init();
+            utils.play_music(0, 0);
 
             // initialise les joueurs
             this.setupPlayers();
@@ -58,7 +65,7 @@
             player.setGame(this);
             computer.setGame(this);
 
-            // todo : implémenter le jeu en réseaux
+            // implémenter le jeu en réseaux
             this.players = [player, computer];
 
             this.players[0].init();
@@ -72,7 +79,7 @@
             if (ci !== this.phaseOrder.length - 1) {
                 this.currentPhase = this.phaseOrder[ci + 1];
             } else {
-                this.currentPhase = this.phaseOrder[0];
+                this.currentPhase = this.phaseOrder[this.playerTurnPhaseIndex];
             }
 
             switch (this.currentPhase) {
@@ -82,15 +89,21 @@
                     // le jeu n'est pas terminé on recommence un tour de jeu
                     this.currentPhase = this.phaseOrder[this.playerTurnPhaseIndex];
                 }
+                break;
             case this.PHASE_INIT_PLAYER:
                 utils.info("Placez vos bateaux");
                 break;
             case this.PHASE_INIT_OPPONENT:
                 this.wait();
                 utils.info("En attente de votre adversaire");
-                this.players[1].areShipsOk(function () {
+                this.players[1].placeShips(function () {
                     self.stopWaiting();
-                    self.goNextPhase();
+                    if (localStorage.getItem("turn") == 2) {
+                        self.currentPhase = self.phaseOrder[self.playerTurnPhaseIndex];
+                        self.goNextPhase();
+                    } else {
+                        self.goNextPhase();
+                    }
                 });
                 break;
             case this.PHASE_PLAY_PLAYER:
@@ -103,8 +116,38 @@
             }
 
         },
+        check_player_alive: function (n) {
+            var i = 0;
+            var j = 0;
+            while (i < this.players[n].grid.length) {
+                while (j < this.players[n].grid[i].length) {
+                    if (this.players[n].grid[i][j] > 0) {
+                        return (true);
+                    }
+                    j = j + 1;
+                }
+                j = 0;
+                i = i + 1;
+            }
+            return (false);
+        },
         gameIsOver: function () {
-            return false;
+            var player_0_alive = this.check_player_alive(0);
+            var player_1_alive = this.check_player_alive(1);
+
+            if (!player_0_alive && !player_1_alive) {
+                alert("T'aurais quand meme pu faire mieux...");
+                return (true);
+            } else if (player_0_alive && !player_1_alive) {
+                alert("GG !");
+                return (true);
+            } else if (!player_0_alive && player_1_alive) {
+                alert("Perdu ! T'es naze...");
+                return (true);
+            } else {
+                this.goNextPhase();
+                return (false);
+            }
         },
         getPhase: function () {
             if (this.waiting) {
@@ -124,6 +167,7 @@
             // on ajoute des acouteur uniquement sur la grid (délégation d'événement)
             this.grid.addEventListener('mousemove', _.bind(this.handleMouseMove, this));
             this.grid.addEventListener('click', _.bind(this.handleClick, this));
+            this.grid.addEventListener('contextmenu', _.bind(this.handleRightClick, this)); // Clique droit
         },
         handleMouseMove: function (e) {
             // on est dans la phase de placement des bateau
@@ -138,8 +182,20 @@
                 }
 
                 // décalage visuelle, le point d'ancrage du curseur est au milieu du bateau
-                ship.dom.style.top = "" + (utils.eq(e.target.parentNode)) * utils.CELL_SIZE - (600 + this.players[0].activeShip * 60) + "px";
-                ship.dom.style.left = "" + utils.eq(e.target) * utils.CELL_SIZE - Math.floor(ship.getLife() / 2) * utils.CELL_SIZE + "px";
+                if (this.placement === 0) {
+                    ship.dom.style.transform = "rotate(0deg)";
+                    ship.dom.style.top = "" + (utils.eq(e.target.parentNode)) * utils.CELL_SIZE - (600 + this.players[0].activeShip * 60) + "px";
+                    ship.dom.style.left = "" + utils.eq(e.target) * utils.CELL_SIZE - Math.floor(ship.getLife() / 2) * utils.CELL_SIZE + "px";
+                } else {
+                    ship.dom.style.transform = "rotate(270deg)";
+                    if (this.players[0].activeShip == 2) {
+                        ship.dom.style.top = "" + (utils.eq(e.target.parentNode)) * utils.CELL_SIZE - (600 + this.players[0].activeShip * 60) - utils.CELL_SIZE / 2  + "px";
+                        ship.dom.style.left = "" + utils.eq(e.target) * utils.CELL_SIZE - Math.floor(ship.getLife() / 2) * utils.CELL_SIZE + utils.CELL_SIZE / 2 + "px";
+                    } else {
+                        ship.dom.style.top = "" + (utils.eq(e.target.parentNode)) * utils.CELL_SIZE - (600 + this.players[0].activeShip * 60) + "px";
+                        ship.dom.style.left = "" + utils.eq(e.target) * utils.CELL_SIZE - Math.floor(ship.getLife() / 2) * utils.CELL_SIZE + "px";
+                    }
+                }
             }
         },
         handleClick: function (e) {
@@ -151,7 +207,7 @@
                 // si on est dans la phase de placement des bateau
                 if (this.getPhase() === this.PHASE_INIT_PLAYER) {
                     // on enregistre la position du bateau, si cela se passe bien (la fonction renvoie true) on continue
-                    if (this.players[0].setActiveShipPosition(utils.eq(e.target), utils.eq(e.target.parentNode))) {
+                    if (this.players[0].setActiveShipPosition(utils.eq(e.target), utils.eq(e.target.parentNode), this.placement)) {
                         // et on passe au bateau suivant (si il n'y en plus la fonction retournera false)
                         if (!this.players[0].activateNextShip()) {
                             this.wait();
@@ -170,8 +226,20 @@
                     }
                 // si on est dans la phase de jeu (du joueur humain)
                 } else if (this.getPhase() === this.PHASE_PLAY_PLAYER) {
+                    // log_grid(this.players[0].grid);
+                    // console.log('-');
+                    // log_grid(this.players[1].grid);
                     this.players[0].play(utils.eq(e.target), utils.eq(e.target.parentNode));
                 }
+            }
+        },
+        handleRightClick: function(e)
+        {
+            e.preventDefault();
+            if (this.placement === 0) {
+                this.placement = 1;
+            } else {
+                this.placement = 0;
             }
         },
         // fonction utlisée par les objets représentant les joueurs (ordinateur ou non)
@@ -181,9 +249,10 @@
             var self = this;
             var msg = "";
 
+            utils.play_sound("fire", 0);
+
             // determine qui est l'attaquant et qui est attaqué
-            var target = this.players.indexOf(from) === 0
-                ? this.players[1]
+            var target = this.players.indexOf(from) === 0 ? this.players[1]
                 : this.players[0];
 
             if (this.currentPhase === this.PHASE_PLAY_OPPONENT) {
@@ -193,10 +262,14 @@
             // on demande à l'attaqué si il a un bateaux à la position visée
             // le résultat devra être passé en paramètre à la fonction de callback (3e paramètre)
             target.receiveAttack(col, line, function (hasSucceed) {
-                if (hasSucceed) {
+                if (target === self.players[1] && self.grid.querySelector('.row:nth-child(' + (line + 1) + ') .cell:nth-child(' + (col + 1) + ')').style.background) {
+                    msg += "Apprend a viser ...";
+                } else if (hasSucceed) {
                     msg += "Touché !";
+                    utils.play_sound("hit", 2000);
                 } else {
                     msg += "Manqué...";
+                    utils.play_sound("water", 2000);
                 }
 
                 utils.info(msg);
@@ -218,8 +291,7 @@
             this.players[0].renderTries(this.grid);
         },
         renderMiniMap: function () {
-            //Le joueur doit renvoyé les données de la carte au rendu de la miniMap
-            this.players[0].renduMiniMap(this.miniGrid);
+            this.players[0].renderShips(this.miniGrid);
         }
     };
 
