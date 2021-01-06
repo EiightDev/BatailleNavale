@@ -1,7 +1,7 @@
 body
 {
     background-image: url(../img/plage2.jpg);
-    color: #f0f0f0;
+    color: black;
 }
 
 .main-container {
@@ -13,7 +13,7 @@ body
 .main-container h1 {
     font-size: 50px;
     text-align: center;
-    color: #f0f0f0;
+    color: black;
 }
 
 .left {
@@ -63,7 +63,7 @@ body
     width: 60px;
     height: 60px;
     /*border: 0;*/
-    border: 2px solid white;
+    border: 2px solid #000000BB;
 }
 
 .mini-grid {
@@ -80,6 +80,7 @@ body
 
 
 #confirm {
+    color:white;
     text-align: center;
     display: none;
 }
